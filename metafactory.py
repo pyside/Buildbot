@@ -9,7 +9,7 @@ from buildbot.process.properties import WithProperties
 from buildbot.steps.transfer import FileDownload
 from buildbot.steps.shell import Compile, ShellCommand
 
-pySideEnv = metadata.PySideBootstrap('/tmp/work/')
+pySideEnv = metadata.PySideBootstrap()
 
 def createFactoriesForAllArchitectures():
     factories = []
@@ -22,7 +22,7 @@ def createFactoryForArchitecture(arch):
         raise ValueError('%s is an unknown architecture.' % arch)
 
     dist = pySideEnv.getDistByArch(arch)
-    baseMasterDir = '/var/lib/buildbot/master'
+    baseMasterDir = '/var/lib/buildbot/master/'
     masterScriptsDir = baseMasterDir + 'scripts/'
 
     linuxWorkDir = pySideEnv.workDir(arch) if pySideEnv.isLinuxArch(arch) else None
@@ -41,7 +41,7 @@ def createFactoryForArchitecture(arch):
         fac.addStep(cmd)
 
     # Download git_clone script
-    scriptSourcePath = masterScriptsDir + 'git_clone.py',
+    scriptSourcePath = masterScriptsDir + 'git_clone.py'
     if pySideEnv.isWin32Arch(arch):
         gitClonePath = win32TempDir + 'git_clone.py'
     elif pySideEnv.isMacOSXArch(arch):

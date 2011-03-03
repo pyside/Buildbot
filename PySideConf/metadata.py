@@ -13,7 +13,8 @@ def uploadCommand(sourceFile):
     pass
 
 class PySideBootstrap():
-    def __init__(self, work_dir):
+    def __init__(self, workDirPrefix='/tmp/work/'):
+        self.workDirPrefix = workDirPrefix
         self.archs = {
             'amd64'             : 'debian',
             'armel'             : 'debian',
@@ -58,8 +59,6 @@ class PySideBootstrap():
             'fedora' : ['git-arch',  'gcc-c++', 'cmake', 'make']
         }
 
-        self.work_dir = work_dir
-
     def isLinuxArch(self, arch):
         return arch in self.archs and self.archs[arch] is not None
 
@@ -74,7 +73,9 @@ class PySideBootstrap():
 
     def workDir(self, arch):
         dist = self.archs[arch]
-        return self.work_dir + dist + '_' + arch + '/'
+        if not dist:
+            return ''
+        return self.workDirPrefix + dist + '_' + arch + '/'
 
     def installPrefix(self):
         return '/usr/'
