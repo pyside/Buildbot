@@ -8,7 +8,6 @@ from buildbot.process.base import BuildRequest
 from buildbot.process.properties import Properties
 from buildbot.status.words import IRC, IRCContact, IrcStatusBot, IrcBuildRequest
 
-from PySideConf.metadata import *
 from PySideConf import config
 
 
@@ -60,7 +59,7 @@ class PySideContact(IRCContact):
                     return
                 repos[repo] = target
 
-        slaves = ['build-pyside-' + arch for arch in config.slavesByArch.keys() + ['macosx', 'win32']]
+        slaves = ['build-pyside-' + arch for arch in config.slavesByArch.keys()]
 
         if builder:
             if builder not in slaves:
