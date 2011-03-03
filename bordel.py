@@ -101,6 +101,10 @@ class PySideContact(IRCContact):
         self.command_BUILD(args, who)
     command_COMPILA.usage = "compila" + command_BUILD_USAGE
 
+    def watchedBuildFinished(self, b):
+        if 'owner' in b.properties:
+            self.send('%s, check this out:' % b.properties['owner'])
+        IRCContact.watchedBuildFinished(self, b)
 
 IrcStatusBot.contactClass = PySideContact
 
