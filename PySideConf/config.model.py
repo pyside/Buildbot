@@ -1,36 +1,31 @@
 #Project information
-projectName = ""
-projectURL  = ""
-buildbotURL = ""
+projectName = 'PySide'
+projectURL  = 'http://www.pyside.org/'
+buildbotURL = 'http://127.0.0.1:8010/'
 
 #RSync server
-fileServerName  = ''
-fileServerBaseDir = ''
+fileServerName  = '127.0.0.1'
+fileServerBaseDir = '/pub'
 
 #IRC server
-ircServerName   = ''
+ircServerName   = '127.0.0.1'
 
-#Git config
-baseGitURL  = ''
+#Git configuration
+baseGitURL  = 'git://127.0.0.1/'
 gitCustomers = {
     'user' : {
-        'project' : '~user/url/project.git'
-    },
+        'repository' : '~user/project/repository.git',
+    }
 }
 
-#slaves config
+#slaves configuration
 from buildbot.buildslave import BuildSlave
-slavePortNum= 000
+slavePortNum = 000
 slaveNames = [
-              BuildSlave("name", "password"),
-             ]
+    BuildSlave('name', 'password'),
+]
 
 slavesByArch = {
-    'amd64'             : 'slave-name',
-    'i386'              : 'slave-name',
-    #'armel'             : 'slave-name',
-    'FREMANTLE_ARMEL'   : 'slave-name',
-    'FREMANTLE_X86'     : 'slave-name',
-    'debug'             : 'slave-name'
+    'arch' : 'slave-hostname',
 }
 
