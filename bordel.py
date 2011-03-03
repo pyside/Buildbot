@@ -9,15 +9,16 @@ from buildbot.process.properties import Properties
 from buildbot.status.words import IRC, IRCContact, IrcStatusBot, IrcBuildRequest
 
 from PySideConf import config
+from PySideConf import metadata
 
 
 class PySideContact(IRCContact):
 
-    def command_OI(self, args, who):
-        if who == 'hugopl':
-            self.send('diga meu filho')
-        else:
-            self.send('que foi?')
+    def command_ORDER(self, args, who):
+        modules = [module.name for module in metadata.BuildPackages]
+        response = who + ', the build order is: ' + ', '.join(modules)
+        self.send(response)
+    command_ORDER.usage = 'order - tells in which order the modules are built'
 
     def command_CUSTOMERS(self, args, who):
         names = config.gitCustomers.keys()
@@ -55,7 +56,7 @@ class PySideContact(IRCContact):
                 builder = target
             else:
                 if not repo in repos:
-                    self.send('%s, there is no "%s" repository' % (who, repo))
+                    self.send('%s, there\'s no "%s" repository' % (who, repo))
                     return
                 repos[repo] = target
 
@@ -90,7 +91,7 @@ class PySideContact(IRCContact):
             ireq = IrcBuildRequest(self)
             req.subscribe(ireq.started)
 
-    command_BUILD_USAGE = " [builder=<BUILDER_NAME>] [apiextractor=<HASH|TAG|BRANCH>] [generatorrunner=<HASH|TAG|BRANCH>] [shiboken=<HASH|TAG|BRANCH>] [pyside=<HASH|TAG|BRANCH>]... - builds the whole PySide toolchain for the user's repositories; if any of them is omitted the buildbot will use HEAD."
+    command_BUILD_USAGE = " [builder=<BUILDER_NAME>] [apiextractor=<HASH|TAG|BRANCH>] [generatorrunner=<HASH|TAG|BRANCH>] [shiboken=<HASH|TAG|BRANCH>] [pyside=<HASH|TAG|BRANCH>]... - builds the whole PySide toolchain for the user's repositories; if any of them is omitted the buildbot will use origin/master."
     command_BUILD.usage = "build" + command_BUILD_USAGE
 
     def command_BUILDA(self, args, who):
