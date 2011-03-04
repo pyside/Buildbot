@@ -96,7 +96,7 @@ class PySideBootstrap():
     def initializeWin32(self):
         cmd = ShellCommand(name='cleanup',
                            description='clean up',
-                           command=['rmdir', '/S', '/Q', 'install'],
+                           command=['if', 'exist', 'install', 'rmdir', '/S', '/Q', 'install'],
                            haltOnFailure=False)
         return [cmd]
 

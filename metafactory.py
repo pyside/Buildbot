@@ -82,12 +82,12 @@ def createFactoryForArchitecture(arch):
         # Step: Clean module directory
         if not pySideEnv.isLinuxArch(arch):
             if pySideEnv.isWin32Arch(arch):
-                cmd = ['rmdir', '/S', '/Q', module.name]
+                cmd = ['if', 'exist', module.name, 'rmdir', '/S', '/Q', module.name]
                 halt = False
             elif pySideEnv.isMacOSXArch(arch):
                 cmd = ['rm', '-rf', module.name]
                 halt = True
-            fac.addStep(ShellCommand(name='clean: ' + module.name,
+            fac.addStep(ShellCommand(name='clean-' + module.name,
                                      description='Clean module ' + module.name,
                                      command=cmd,
                                      haltOnFailure=halt))
@@ -183,6 +183,7 @@ def createFactoryForArchitecture(arch):
             fac.addStep(ShellCommand(name=_name,
                                      description=_desc,
                                      command=cmd,
+                                     workdir=buildDir,
                                      haltOnFailure=True,
                                      timeout=30*60,
                                      env=environment))
@@ -209,13 +210,14 @@ def createFactoryForArchitecture(arch):
         cmd = []
         environment = None
         if pySideEnv.isWin32Arch(arch):
-            cmd = pySideEnv.commandPrefix(arch)
+            cmd = pySideEnv.commandPrefix(arch) + ['nmake']
         elif pySideEnv.isLinuxArch(arch):
-            cmd = pySideEnv.commandPrefix(arch, dist, buildPath)
+            cmd = pySideEnv.commandPrefix(arch, dist, buildPath) + ['make']
             environment = pySideEnv.buildVars(dist, arch, buildPath)
         else:
+            cmd += ['make']
             environment = macOSXBuildEnv
-        cmd += ['make', 'install/fast']
+        cmd += ['install/fast']
 
         fac.addStep(ShellCommand(name='install-' + module.name,
                                  description=['Install module ' + module.name],
