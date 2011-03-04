@@ -167,20 +167,25 @@ def createFactoryForArchitecture(arch):
         # Step: Build module
         _name = 'build-' + module.name
         _desc = 'Build module ' + module.name
-        if pySideEnv.isLinuxArch(arch):
-            cmd = pySideEnv.commandPrefix(arch, dist, buildPath) + ['make', '-j2']
-            fac.addStep(ShellCommand(name=_name,
-                                     description=_desc,
-                                     command=cmd,
-                                     haltOnFailure=True,
-                                     timeout=30*60,
-                                     env=pySideEnv.buildVars(dist, arch, buildPath)))
-        else:
+        if pySideEnv.isMacOSXArch(arch):
             fac.addStep(Compile(name=_name,
                                 description=_desc,
                                 workdir=buildDir,
                                 env=macOSXBuildEnv,
                                 haltOnFailure=True))
+        else:
+            if pySideEnv.isWin32Arch(arch):
+                cmd = pySideEnv.commandPrefix(arch) + ['nmake']
+                environment = None
+            else:
+                cmd = pySideEnv.commandPrefix(arch, dist, buildPath) + ['make', '-j2']
+                environment = pySideEnv.buildVars(dist, arch, buildPath)
+            fac.addStep(ShellCommand(name=_name,
+                                     description=_desc,
+                                     command=cmd,
+                                     haltOnFailure=True,
+                                     timeout=30*60,
+                                     env=environment))
 
         # Step: Test module
         cmd = []
