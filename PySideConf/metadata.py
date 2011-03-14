@@ -1,12 +1,13 @@
 from buildbot.steps.shell import ShellCommand
 from buildbot.steps.transfer import FileUpload
 import config
+import os
 
 def downloadCommand(sourceFile, destFile):
     src = 'rsync://%s%s/%s'%(config.fileServerName, config.fileServerBaseDir, sourceFile)
     update_command = ['sudo','rsync', '-a', src, destFile]
     cmd = ShellCommand(name='download',
-                       description=['Download from file server.', src],
+                       description=['Download from file server.', sourceFile],
                        command=update_command,
                        haltOnFailure=True)
     return cmd
@@ -448,7 +449,16 @@ class PySideBootstrap():
 class Package(object):
     name = ''
     gitUrl = ''
-    version = ''
+    def getVersion(self):
+        filename = self.name.lower() + '.version'
+        filepath = os.path.join('/var/lib/buildbot/master/PySideConf', filename)
+        if not os.path.exists(filepath):
+            return ''
+        versionfile = open(filepath, 'r')
+        version = versionfile.readline().strip()
+        versionfile.close()
+        return version
+    version = property(getVersion)
     deps = {}
     moduleDeps = []
 
@@ -463,7 +473,6 @@ class Package(object):
 class ApiExtractor(Package):
     name = 'ApiExtractor'
     gitUrl = '%s/pyside/apiextractor.git' % config.baseGitURL
-    version = '0.10.0'
     deps = {
         'debian': ['libxslt1-dev', 'libxml2-dev', 'libqt4-dev'],
         'sbox'  : ['libxslt1-dev', 'libxml2-dev', 'libqt4-dev'],
@@ -474,13 +483,11 @@ class ApiExtractor(Package):
 class GeneratorRunner(Package):
     name = 'GeneratorRunner'
     gitUrl = '%s/pyside/generatorrunner.git' % config.baseGitURL
-    version = '0.6.7'
     moduleDeps = [ApiExtractor]
 
 class Shiboken(Package):
     name = 'Shiboken'
     gitUrl = '%s/pyside/shiboken.git' % config.baseGitURL
-    version = '1.0.0'
     moduleDeps = [GeneratorRunner, ApiExtractor]
     deps = {
         'debian'    : ['python2.6-dev'],
@@ -492,7 +499,6 @@ class Shiboken(Package):
 class PySide(Package):
     name = 'PySide'
     gitUrl = '%s/pyside/pyside.git' % config.baseGitURL
-    version = '1.0.0'
     deps = {
         'debian'    : ['libqt4-sql-sqlite'],
         'sbox'      : ['libqt4-sql-sqlite'],
