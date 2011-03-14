@@ -351,8 +351,8 @@ class PySideBootstrap():
 
         dist = self.archs[arch]
         if dist:
-            if arch == 'debug' and 'abi-compliance-checker' in packages:
-                packages.remove('abi-compliance-checker')
+            if arch == 'amd64' and dist == 'debian':
+                packages.append('abi-compliance-checker')
             update_command = ''
             if dist in ('debian', 'sbox', 'ubuntu'):
                 update_command = self.commandPrefix(arch, self.archs[arch]) + self.installCmds[dist] + packages
@@ -449,12 +449,7 @@ class Package(object):
     name = ''
     gitUrl = ''
     version = ''
-    deps = {
-        'debian' : ['abi-compliance-checker'],
-        'sbox'   : [],
-        'ubuntu' : ['abi-compliance-checker'],
-        'fedora' : []
-    }
+    deps = {}
     moduleDeps = []
 
     def depends(self, dist):
@@ -463,8 +458,6 @@ class Package(object):
             result += m().depends(dist)
         if dist in self.deps:
             result += self.deps[dist]
-        if dist in Package.deps:
-            result += Package.deps[dist]
         return result
 
 class ApiExtractor(Package):
