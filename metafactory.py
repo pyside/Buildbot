@@ -51,7 +51,7 @@ def createFactoryForArchitecture(arch):
     fac.addStep(FileDownload(mastersrc=scriptSourcePath, slavedest=gitClonePath, mode=0755))
     if pySideEnv.isLinuxArch(arch):
         gitCloneTmpPath = gitClonePath
-        gitClonePath = pySideEnv.chrootPath(dist, arch) + '/usr/bin/'
+        gitClonePath = pySideEnv.chrootPath(arch, dist) + '/usr/bin/'
         cmd = ['cp', '-a', gitCloneTmpPath, gitClonePath]
         if dist != 'sbox':
             cmd.insert(0, 'sudo')
@@ -225,6 +225,11 @@ def createFactoryForArchitecture(arch):
                                  workdir=buildDir,
                                  haltOnFailure=True,
                                  env=environment))
+
+        # Step: ABI compliance check
+        for cmd in pySideEnv.abiComplianceCheck(arch, dist, module):
+            fac.addStep(cmd)
+
 
     if pySideEnv.isWin32Arch(arch):
         buildDir = 'pyside-win32'

@@ -1,10 +1,12 @@
 from buildbot.steps.shell import ShellCommand
+from buildbot.steps.transfer import FileUpload
 import config
 
 def downloadCommand(sourceFile, destFile):
-    update_command = ['sudo','rsync', '-a', 'rsync://%s%s/%s'%(config.fileServerName, config.fileServerBaseDir, sourceFile), destFile]
+    src = 'rsync://%s%s/%s'%(config.fileServerName, config.fileServerBaseDir, sourceFile)
+    update_command = ['sudo','rsync', '-a', src, destFile]
     cmd = ShellCommand(name='download',
-                       description=['download'],
+                       description=['Download from file server.', src],
                        command=update_command,
                        haltOnFailure=True)
     return cmd
@@ -86,7 +88,7 @@ class PySideBootstrap():
     def libraryDir(self):
         return self.installPrefix() + 'lib/';
 
-    def chrootPath(self, dist, arch):
+    def chrootPath(self, arch, dist):
         if dist == 'fedora':
             return self.paths[dist]
         if dist == 'sbox':
@@ -118,7 +120,7 @@ class PySideBootstrap():
         commands.append(downloadCommand('scripts/umount_chroot.sh', '/tmp/umount_chroot.sh'))
 
         #append commands
-        update_command = ['sudo','/tmp/umount_chroot.sh', '%s/proc' % self.chrootPath(dist, arch)]
+        update_command = ['sudo','/tmp/umount_chroot.sh', '%s/proc' % self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='umount proc',
                            description=['umoutn proc'],
                            command=update_command,
@@ -126,7 +128,7 @@ class PySideBootstrap():
         commands.append(cmd)
 
         '''
-        update_command = ['sudo', '/tmp/umount_chroot.sh', '%s/dev' % self.chrootPath(dist, arch)]
+        update_command = ['sudo', '/tmp/umount_chroot.sh', '%s/dev' % self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='umount dev',
                            description=['umoutn dev'],
                            command=update_command,
@@ -134,14 +136,14 @@ class PySideBootstrap():
         commands.append(cmd)
         '''
 
-        update_command = ['sudo','rm', '-rf', '/tmp/%s'%(chroot_name), self.chrootPath(dist, arch)]
+        update_command = ['sudo','rm', '-rf', '/tmp/%s'%(chroot_name), self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='clenup',
                            description=['clenup'],
                            command=update_command,
                            haltOnFailure=True)
         commands.append(cmd)
 
-        update_command = ['sudo','mkdir', '-p', self.chrootPath(dist, arch)]
+        update_command = ['sudo','mkdir', '-p', self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='mkdir',
                            description=['mkdir'],
                            command=update_command,
@@ -152,14 +154,14 @@ class PySideBootstrap():
         update_command = ['sudo','/usr/sbin/debootstrap',
                           '--arch', arch,
                           self.dists[dist],
-                          self.chrootPath(dist, arch),
+                          self.chrootPath(arch, dist),
                           self.urls[dist]]
         '''
 
         commands.append(downloadCommand('data/%s' % chroot_name, '/tmp/%s' % chroot_name))
         update_command = ['sudo','tar', '-jxvf',
                           '/tmp/%s' % chroot_name,
-                          '-C', self.chrootPath(dist, arch)]
+                          '-C', self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='debootstrap',
                            description=['initialize'],
                            descriptionDone=['initialized'],
@@ -167,7 +169,7 @@ class PySideBootstrap():
                            haltOnFailure=True)
         commands.append(cmd)
 
-        update_command = ['sudo', 'mount', '-o', 'bind', '/proc', '%s/proc' % self.chrootPath(dist, arch)]
+        update_command = ['sudo', 'mount', '-o', 'bind', '/proc', '%s/proc' % self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='mount proc',
                            description=['mount proc'],
                            command=update_command,
@@ -175,7 +177,7 @@ class PySideBootstrap():
         commands.append(cmd)
 
         '''
-        update_command = ['sudo', 'mount', '-o', 'bind', '/dev', '%s/dev' % self.chrootPath(dist, arch)]
+        update_command = ['sudo', 'mount', '-o', 'bind', '/dev', '%s/dev' % self.chrootPath(arch, dist)]
         cmd = ShellCommand(name='mount dev',
                            description=['mout dev'],
                            command=update_command,
@@ -349,6 +351,8 @@ class PySideBootstrap():
 
         dist = self.archs[arch]
         if dist:
+            if arch == 'debug' and 'abi-compliance-checker' in packages:
+                packages.remove('abi-compliance-checker')
             update_command = ''
             if dist in ('debian', 'sbox', 'ubuntu'):
                 update_command = self.commandPrefix(arch, self.archs[arch]) + self.installCmds[dist] + packages
@@ -364,12 +368,93 @@ class PySideBootstrap():
 
         return commands
 
+    def abiComplianceCheck(self, arch, dist, module):
+        commands = []
+
+        if not arch in config.workDirByArch:
+            return commands
+
+        workDir = config.workDirByArch[arch]
+
+        if not workDir:
+            return commands
+
+        chrootDir = self.chrootPath(arch, dist)
+        abiref = '%s-%s' % (module.name.lower(), module.version)
+
+        # 1. Download abi-checker reference files
+        abitarball =  '%s.tar.gz' % abiref
+        src = 'abi-compliance/%s/%s' % (arch, abitarball)
+        dst = chrootDir + '/tmp/%s' % abitarball
+        commands.append(downloadCommand(src, dst))
+
+        # 2. Unpack reference tarball
+        cmd = self.commandPrefix(arch, dist) + ['tar', 'xvf', '/tmp/' + abitarball, '-C', '/tmp']
+        commands.append(ShellCommand(name='unpack-abi-files',
+                                     description=['Unpack ABI compliance check files.'],
+                                     command=cmd,
+                                     haltOnFailure=True))
+
+        # 3. Download abi-checker files
+
+        # 3.1. Download abi-checker acc xml template
+        acc_xml_file = module.name.lower() + '-acc.xml.in'
+        src = 'abi-compliance/' + acc_xml_file
+        dst = chrootDir + '/tmp/' + acc_xml_file
+        commands.append(downloadCommand(src, dst))
+
+        # 3.2. Prepare description files for module ABI checking
+        src = 'abi-compliance/prepare_acc_xml.py'
+        dst = chrootDir + '/tmp/prepare_acc_xml.py'
+        commands.append(downloadCommand(src, dst))
+
+        cmd = self.commandPrefix(arch, dist) +\
+              ['python', '/tmp/prepare_acc_xml.py', module.name.lower(), module.version, '/tmp/' + abiref]
+        commands.append(ShellCommand(name='prepare-acc-files',
+                                     description=['Prepare acc xml files.'],
+                                     command=cmd,
+                                     haltOnFailure=True))
+
+        # 4. Run abi-compliance-checker
+        cmd = self.commandPrefix(arch, dist) \
+              + ['abi-compliance-checker', '-l', module.name.lower(),
+                 '-d1', '/tmp/%s-acc-ref.xml' % module.name.lower(),
+                 '-d2', '/tmp/%s-acc-new.xml' % module.name.lower()]
+        commands.append(ShellCommand(name='abi-check',
+                                     description=['Run ABI check'],
+                                     command=cmd,
+                                     workdir=chrootDir + '/tmp/',
+                                     haltOnFailure=True))
+
+        # 5. Upload HTML report to master
+        master_report_dir = '~/master/public_html/abi-reports/%s/%s/' % (arch, module.name.lower())
+        slave_abi_report = chrootDir + \
+                           '/compat_reports/%(module)s/%(version)s-reference_to_%(version)s-new/abi_compat_report.html' % \
+                           { 'module' : module.name.lower(), 'version' : module.version }
+        commands.append(FileUpload(slavesrc=slave_abi_report,
+                                   masterdest=master_report_dir + 'abi_compat_report.html',
+                                   mode=0644))
+
+        # 6. Add link to report on the master HTML status
+        link = 'http://10.60.5.198:8010/abi-reports/%s/%s/abi_compat_report.html' % (arch, module.name.lower())
+        commands.append(ShellCommand(name='abi-report-link',
+                                     description=['ABI Report', '<a href="%s">%s ABI Report</a>' % (link, module.name)],
+                                     command=['echo'],
+                                     haltOnFailure=True))
+
+        return commands
+
 
 class Package(object):
     name = ''
     gitUrl = ''
     version = ''
-    deps = []
+    deps = {
+        'debian' : ['abi-compliance-checker'],
+        'sbox'   : [],
+        'ubuntu' : ['abi-compliance-checker'],
+        'fedora' : []
+    }
     moduleDeps = []
 
     def depends(self, dist):
@@ -378,12 +463,14 @@ class Package(object):
             result += m().depends(dist)
         if dist in self.deps:
             result += self.deps[dist]
+        if dist in Package.deps:
+            result += Package.deps[dist]
         return result
 
 class ApiExtractor(Package):
     name = 'ApiExtractor'
     gitUrl = '%s/pyside/apiextractor.git' % config.baseGitURL
-    version = '0.9.2'
+    version = '0.10.0'
     deps = {
         'debian': ['libxslt1-dev', 'libxml2-dev', 'libqt4-dev'],
         'sbox'  : ['libxslt1-dev', 'libxml2-dev', 'libqt4-dev'],
@@ -394,7 +481,7 @@ class ApiExtractor(Package):
 class GeneratorRunner(Package):
     name = 'GeneratorRunner'
     gitUrl = '%s/pyside/generatorrunner.git' % config.baseGitURL
-    version = '0.9.2'
+    version = '0.6.7'
     moduleDeps = [ApiExtractor]
 
 class Shiboken(Package):

@@ -29,3 +29,7 @@ slavesByArch = {
     'arch' : 'slave-hostname',
 }
 
+# The work directories are found on slaves' /etc/schroot/schroot.conf
+workDirByArch = {
+    'arch' : None
+}
