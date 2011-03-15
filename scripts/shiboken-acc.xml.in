@@ -1,0 +1,41 @@
+<version>
+    ${VERSION_NUMBER}-${VERSION_DESCRIPTION}
+</version>
+
+<headers>
+    ${BASE_DIR}/include/shiboken/threadstatesaver.h
+    ${BASE_DIR}/include/shiboken/sbkdbg.h
+    ${BASE_DIR}/include/shiboken/shiboken.h
+    ${BASE_DIR}/include/shiboken/bindingmanager.h
+    ${BASE_DIR}/include/shiboken/sbkenum.h
+    ${BASE_DIR}/include/shiboken/python25compat.h
+    ${BASE_DIR}/include/shiboken/typeresolver.h
+    ${BASE_DIR}/include/shiboken/shibokenmacros.h
+    ${BASE_DIR}/include/shiboken/conversions.h
+    ${BASE_DIR}/include/shiboken/basewrapper.h
+    ${BASE_DIR}/include/shiboken/autodecref.h
+    ${BASE_DIR}/include/shiboken/gilstate.h
+    ${BASE_DIR}/include/shiboken/helper.h
+</headers>
+
+<libs>
+    ${BASE_DIR}/lib/libshiboken-python2.6.so.${VERSION_NUMBER}
+</libs>
+
+<include_paths>
+    ${BASE_DIR}/include/shiboken/
+    /usr/include/qt4/QtCore/
+    /usr/include/qt4/Qt/
+    /usr/include/qt4/
+</include_paths>
+
+<gcc_options>
+    -fvisibility=hidden
+    -Wall
+    -Wno-strict-aliasing
+    -Wl,-O1
+    -Os
+    -DQT_PLUGIN
+    -DQT_SHARED
+    -DRXX_ALLOCATOR_INIT_0
+</gcc_options>

@@ -1,0 +1,30 @@
+<version>
+    ${VERSION_NUMBER}-${VERSION_DESCRIPTION}
+</version>
+
+<headers>
+    ${BASE_DIR}/include/generatorrunner/generatorrunnermacros.h
+    ${BASE_DIR}/include/generatorrunner/generator.h
+</headers>
+
+<libs>
+    ${BASE_DIR}/lib/libgenrunner.so.${VERSION_NUMBER}
+</libs>
+
+<include_paths>
+    ${BASE_DIR}/include/generatorrunner/
+    /usr/include/qt4/QtCore/
+    /usr/include/qt4/Qt/
+    /usr/include/qt4/
+</include_paths>
+
+<gcc_options>
+    -fvisibility=hidden
+    -Wall
+    -Wno-strict-aliasing
+    -Wl,-O1
+    -Os
+    -DQT_PLUGIN
+    -DQT_SHARED
+    -DRXX_ALLOCATOR_INIT_0
+</gcc_options>

@@ -1,0 +1,39 @@
+<version>
+    ${VERSION_NUMBER}-${VERSION_DESCRIPTION}
+</version>
+
+<headers>
+    ${BASE_DIR}/include/apiextractor/abstractmetalang.h
+    ${BASE_DIR}/include/apiextractor/apiextractor.h
+    ${BASE_DIR}/include/apiextractor/apiextractormacros.h
+    ${BASE_DIR}/include/apiextractor/docparser.h
+    ${BASE_DIR}/include/apiextractor/fileout.h
+    ${BASE_DIR}/include/apiextractor/graph.h
+    ${BASE_DIR}/include/apiextractor/include.h
+    ${BASE_DIR}/include/apiextractor/qtdocparser.h
+    ${BASE_DIR}/include/apiextractor/reporthandler.h
+    ${BASE_DIR}/include/apiextractor/typedatabase.h
+    ${BASE_DIR}/include/apiextractor/typesystem.h
+</headers>
+
+<libs>
+    ${BASE_DIR}/lib/libapiextractor.so.${VERSION_NUMBER}
+</libs>
+
+<include_paths>
+    ${BASE_DIR}/include/apiextractor/
+    /usr/include/qt4/QtCore/
+    /usr/include/qt4/Qt/
+    /usr/include/qt4/
+</include_paths>
+
+<gcc_options>
+    -fvisibility=hidden
+    -Wall
+    -Wno-strict-aliasing
+    -Wl,-O1
+    -Os
+    -DQT_PLUGIN
+    -DQT_SHARED
+    -DRXX_ALLOCATOR_INIT_0
+</gcc_options>

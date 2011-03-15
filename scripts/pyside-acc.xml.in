@@ -1,0 +1,38 @@
+<version>
+    ${VERSION_NUMBER}-${VERSION_DESCRIPTION}
+</version>
+
+<headers>
+    ${BASE_DIR}/include/PySide/pysidesignal.h
+    ${BASE_DIR}/include/PySide/pyside_global.h
+    ${BASE_DIR}/include/PySide/pysidemacros.h
+    ${BASE_DIR}/include/PySide/globalreceiver.h
+    ${BASE_DIR}/include/PySide/pysideconversions.h
+    ${BASE_DIR}/include/PySide/pyside.h
+    ${BASE_DIR}/include/PySide/pysidemetafunction.h
+    ${BASE_DIR}/include/PySide/signalmanager.h
+    ${BASE_DIR}/include/PySide/dynamicqmetaobject.h
+    ${BASE_DIR}/include/PySide/pysideproperty.h
+</headers>
+
+<libs>
+    ${BASE_DIR}/lib/libpyside-python2.6.so.${VERSION_NUMBER}
+</libs>
+
+<include_paths>
+    ${BASE_DIR}/include/PySide/
+    /usr/include/qt4/QtCore/
+    /usr/include/qt4/Qt/
+    /usr/include/qt4/
+</include_paths>
+
+<gcc_options>
+    -fvisibility=hidden
+    -Wall
+    -Wno-strict-aliasing
+    -Wl,-O1
+    -Os
+    -DQT_PLUGIN
+    -DQT_SHARED
+    -DRXX_ALLOCATOR_INIT_0
+</gcc_options>
