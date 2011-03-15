@@ -519,7 +519,7 @@ class ApiExtractor(Package):
 class GeneratorRunner(Package):
     name = 'GeneratorRunner'
     gitUrl = '%s/pyside/generatorrunner.git' % config.baseGitURL
-    linuxLibFile = 'libgenrunner'
+    linuxLibFile = 'libgenrunner.so'
     moduleDeps = [ApiExtractor]
 
 class Shiboken(Package):
