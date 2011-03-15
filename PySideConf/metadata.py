@@ -436,10 +436,37 @@ class PySideBootstrap():
                                    masterdest=master_report_dir + 'abi_compat_report.html',
                                    mode=0644))
 
-        # 6. Add link to report on the master HTML status
+        # 6. Upload tarball of the currently generated library
+
+        # 6.1. Copy ABI files creator script
+        src = 'abi-compliance/create_abi_files.sh'
+        dst = chrootDir + '/tmp/create_abi_files.sh'
+        commands.append(downloadCommand(src, dst))
+
+        # 6.2. Generate tarball for the newly generate library
+        libfile = '%s.%s' % (module.linuxLibFile, module.version)
+        abi_files_dir = '%s-%s' % (module.name.lower(), module.version)
+        cmd = self.commandPrefix(arch, dist) + ['/tmp/create_abi_files.sh', arch, libfile, module.linuxIncludeDir, abi_files_dir]
+        commands.append(ShellCommand(name='prepare-new-abi-files',
+                                     description=['Prepare newly generated ABI files for uploading to master.'],
+                                     command=cmd,
+                                     haltOnFailure=True))
+
+        # 6.3. Upload ABI file tarball to buildbot master
+        slave_abi_tarball = '%s/tmp/latest/%s/%s.tar.gz' % (chrootDir, arch, abi_files_dir)
+        master_report_dir = '~/master/public_html/abi-reports/%s/%s/' % (arch, module.name.lower())
+        commands.append(FileUpload(slavesrc=slave_abi_tarball,
+                                   masterdest='%s/%s.tar.gz' % (master_report_dir, abi_files_dir),
+                                   mode=0644))
+
+        # 7. Add link to report on the master HTML status
         link = 'http://10.60.5.198:8010/abi-reports/%s/%s/abi_compat_report.html' % (arch, module.name.lower())
+        link_tarball = 'http://10.60.5.198:8010/abi-reports/%(arch)s/%(module)s/%(tarball)s' % \
+                       { 'arch' : arch, 'module' : module.name.lower(), 'tarball': abitarball }
         commands.append(ShellCommand(name='abi-report-link',
-                                     description=['ABI Report', '<a href="%s">%s ABI Report</a>' % (link, module.name)],
+                                     description=['ABI Report',
+                                                  '<a href="%s">%s ABI Report</a>' % (link, module.name),
+                                                  '<a href="%s">%s ABI Files</a>' % (link_tarball, module.name)],
                                      command=['echo'],
                                      haltOnFailure=True))
 
@@ -449,6 +476,9 @@ class PySideBootstrap():
 class Package(object):
     name = ''
     gitUrl = ''
+    deps = {}
+    moduleDeps = []
+
     def getVersion(self):
         filename = self.name.lower() + '.version'
         filepath = os.path.join('/var/lib/buildbot/master/PySideConf', filename)
@@ -459,8 +489,14 @@ class Package(object):
         versionfile.close()
         return version
     version = property(getVersion)
-    deps = {}
-    moduleDeps = []
+
+    def getLinuxLibFile(self):
+        return 'lib%s.so' % self.name.lower()
+    linuxLibFile = property(getLinuxLibFile)
+
+    def getLinuxIncludeDir(self):
+        return self.name.lower()
+    linuxIncludeDir = property(getLinuxIncludeDir)
 
     def depends(self, dist):
         result = []
@@ -483,11 +519,13 @@ class ApiExtractor(Package):
 class GeneratorRunner(Package):
     name = 'GeneratorRunner'
     gitUrl = '%s/pyside/generatorrunner.git' % config.baseGitURL
+    linuxLibFile = 'libgenrunner'
     moduleDeps = [ApiExtractor]
 
 class Shiboken(Package):
     name = 'Shiboken'
     gitUrl = '%s/pyside/shiboken.git' % config.baseGitURL
+    linuxLibFile = 'libshiboken-python2.6.so'
     moduleDeps = [GeneratorRunner, ApiExtractor]
     deps = {
         'debian'    : ['python2.6-dev'],
@@ -505,6 +543,8 @@ class PySide(Package):
         'ubuntu'    : ['libqt4-sql-sqlite'],
         'fedora'    : ['xvfb']
     }
+    linuxIncludeDir = 'PySide'
+    linuxLibFile = 'libpyside-python2.6.so'
     moduleDeps = [Shiboken, GeneratorRunner, ApiExtractor]
 
 BuildPackages = [ApiExtractor(), GeneratorRunner(), Shiboken(), PySide()]
