@@ -22,7 +22,7 @@ f.close()
 f = open('/tmp/%s-acc-new.xml' % module_name, 'w')
 contents = template.substitute(VERSION_NUMBER=version,
                                VERSION_DESCRIPTION='new',
-                               BASE_DIR=ref_base_dir)
+                               BASE_DIR=new_base_dir)
 f.write(contents)
 f.close()
 
