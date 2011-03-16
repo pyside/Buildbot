@@ -1,5 +1,5 @@
 <version>
-    ${VERSION_NUMBER}-${VERSION_DESCRIPTION}
+    ${VERSION_DESCRIPTION}
 </version>
 
 <headers>
@@ -16,7 +16,7 @@
 </headers>
 
 <libs>
-    ${BASE_DIR}/lib/libpyside-python2.6.so.${VERSION_NUMBER}
+    ${BASE_DIR}/lib/libpyside-python2.6.so
 </libs>
 
 <include_paths>

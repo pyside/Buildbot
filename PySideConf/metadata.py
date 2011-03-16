@@ -381,10 +381,9 @@ class PySideBootstrap():
             return commands
 
         chrootDir = self.chrootPath(arch, dist)
-        abiref = '%s-%s' % (module.name.lower(), module.version)
 
         # 1. Download abi-checker reference files
-        abitarball =  '%s.tar.gz' % abiref
+        abitarball =  '%s.tar.gz' % module.name.lower()
         src = 'abi-compliance/%s/%s' % (arch, abitarball)
         dst = chrootDir + '/tmp/%s' % abitarball
         commands.append(downloadCommand(src, dst))
@@ -410,7 +409,7 @@ class PySideBootstrap():
         commands.append(downloadCommand(src, dst))
 
         cmd = self.commandPrefix(arch, dist) +\
-              ['python', '/tmp/prepare_acc_xml.py', module.name.lower(), module.version, '/tmp/' + abiref]
+              ['python', '/tmp/prepare_acc_xml.py', module.name.lower(), '/tmp/' + module.name.lower()]
         commands.append(ShellCommand(name='prepare-acc-files',
                                      description=['Prepare acc xml files.'],
                                      command=cmd,
@@ -430,8 +429,7 @@ class PySideBootstrap():
         # 5. Upload HTML report to master
         master_report_dir = '~/master/public_html/abi-reports/%s/%s/' % (arch, module.name.lower())
         slave_abi_report = chrootDir + \
-                           '/compat_reports/%(module)s/%(version)s-reference_to_%(version)s-new/abi_compat_report.html' % \
-                           { 'module' : module.name.lower(), 'version' : module.version }
+                           '/compat_reports/%s/reference_to_new/abi_compat_report.html' % module.name.lower()
         commands.append(FileUpload(slavesrc=slave_abi_report,
                                    masterdest=master_report_dir + 'abi_compat_report.html',
                                    mode=0644))
@@ -444,19 +442,18 @@ class PySideBootstrap():
         commands.append(downloadCommand(src, dst))
 
         # 6.2. Generate tarball for the newly generate library
-        libfile = '%s.%s' % (module.linuxLibFile, module.version)
-        abi_files_dir = '%s-%s' % (module.name.lower(), module.version)
-        cmd = self.commandPrefix(arch, dist) + ['/tmp/create_abi_files.sh', arch, libfile, module.linuxIncludeDir, abi_files_dir]
+        cmd = self.commandPrefix(arch, dist) + \
+              ['/tmp/create_abi_files.sh', arch, module.linuxLibFile, module.linuxIncludeDir, module.name.lower()]
         commands.append(ShellCommand(name='prepare-new-abi-files',
                                      description=['Prepare newly generated ABI files for uploading to master.'],
                                      command=cmd,
                                      haltOnFailure=True))
 
         # 6.3. Upload ABI file tarball to buildbot master
-        slave_abi_tarball = '%s/tmp/latest/%s/%s.tar.gz' % (chrootDir, arch, abi_files_dir)
+        slave_abi_tarball = '%s/tmp/latest/%s/%s.tar.gz' % (chrootDir, arch, module.name.lower())
         master_report_dir = '~/master/public_html/abi-reports/%s/%s/' % (arch, module.name.lower())
         commands.append(FileUpload(slavesrc=slave_abi_tarball,
-                                   masterdest='%s/%s.tar.gz' % (master_report_dir, abi_files_dir),
+                                   masterdest='%s/%s.tar.gz' % (master_report_dir, module.name.lower()),
                                    mode=0644))
 
         # 7. Add link to report on the master HTML status
