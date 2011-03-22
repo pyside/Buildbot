@@ -24,6 +24,7 @@
 
 <include_paths>
     ${BASE_DIR}/include/shiboken/
+    /usr/include/python2.6/
     /usr/include/generatorrunner/
     /usr/include/apiextractor/
     /usr/include/qt4/QtCore/
