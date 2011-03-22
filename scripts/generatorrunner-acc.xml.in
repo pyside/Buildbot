@@ -13,6 +13,7 @@
 
 <include_paths>
     ${BASE_DIR}/include/generatorrunner/
+    /usr/include/apiextractor/
     /usr/include/qt4/QtCore/
     /usr/include/qt4/Qt/
     /usr/include/qt4/
